@@ -1,4 +1,5 @@
 const NodeMediaServer = require('node-media-server')
+const { ffmpegPath, hlsPath }= require('./domain.config')
 
 
 const config = {
@@ -20,14 +21,14 @@ const config = {
       secret: 'supersecret' 
     },
     trans: {
-      ffmpeg: 'C:\\Program Files\\ffmpeg-7.1.1-essentials_build\\bin\\ffmpeg.exe',
+      ffmpeg: ffmpegPath,
       tasks: [
         {
           app: 'live',
           hls: true,
-          hlsFlags: '[hls_time=1:hls_list_size=3:hls_flags=delete_segments+omit_endlist]',
+          hlsFlags: '[hls_time=1:hls_list_size=2:hls_flags=delete_segments+omit_endlist]',
           hlsKeep: true,
-          hlsPath: 'C:\\Users\\91930\\Desktop\\Vs_Code\\Streaming\\media',
+          hlsPath: hlsPath,
           vc: 'libx264',
           ac: 'aac',
           rtmp: true,
@@ -39,7 +40,7 @@ const config = {
                 '-c:v', 'libx264',
                 '-profile:v', 'main',       // main profile is better for 720p
                 '-crf', '23',               // higher CRF = more compression, adjust for your needs (lower = better quality)
-                '-preset', 'veryfast',      // tradeoff: faster encode, higher bitrate
+                '-preset', 'ultrafast',      // tradeoff: faster encode, higher bitrate
                 '-b:v', '2000k',            // good bitrate for 720p
                 '-c:a', 'aac',
                 '-ar', '44100',

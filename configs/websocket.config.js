@@ -1,5 +1,5 @@
 const { spawn } = require('child_process')
-const { rtmp_live_server_name, rtmp_domain_name }= require('./domain.config')
+const { rtmp_live_server_name, rtmp_domain_name, ffmpegPath }= require('./domain.config')
 
 
 
@@ -8,7 +8,7 @@ exports.handleWebSocketConnection= async(wss)=>{
         wss.on('connection', function connection(ws) {
             console.log('🔌 WebSocket connected')
            
-            const ffmpeg = spawn('C:\\Program Files\\ffmpeg-7.1.1-essentials_build\\bin\\ffmpeg.exe', [
+            const ffmpeg = spawn(ffmpegPath, [
                 '-fflags', 'nobuffer',
                 '-flags', 'low_delay',
                 '-strict', 'experimental',

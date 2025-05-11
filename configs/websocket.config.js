@@ -1,5 +1,5 @@
 const { spawn } = require('child_process')
-const { rtmp_live_server_name, rtmp_domain_name, ffmpegPath }= require('./domain.config')
+const { rtmp_live_server_name, rtmp_domain_name, ffmpegPath, ffmpegLinuxPath }= require('./domain.config')
 
 
 

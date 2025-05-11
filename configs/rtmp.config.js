@@ -1,5 +1,5 @@
 const NodeMediaServer = require('node-media-server')
-const { ffmpegPath, hlsPath }= require('./domain.config')
+const { ffmpegPath, hlsPath, hlsPathLinux, ffmpegLinuxPath }= require('./domain.config')
 
 
 const config = {
@@ -29,25 +29,10 @@ const config = {
           hlsFlags: '[hls_time=1:hls_list_size=2:hls_flags=delete_segments+omit_endlist]',
           hlsKeep: true,
           hlsPath: hlsPath,
-          vc: 'libx264',
-          ac: 'aac',
+          vc: null,
+          ac: null,
           rtmp: true,
-          hlsVariant: [
-            {
-              name: '720p',
-              args: [
-                '-vf', 'scale=w=1280:h=720',
-                '-c:v', 'libx264',
-                '-profile:v', 'main',       // main profile is better for 720p
-                '-crf', '23',               // higher CRF = more compression, adjust for your needs (lower = better quality)
-                '-preset', 'ultrafast',      // tradeoff: faster encode, higher bitrate
-                '-b:v', '2000k',            // good bitrate for 720p
-                '-c:a', 'aac',
-                '-ar', '44100',
-                '-b:a', '128k'              // reduced audio bitrate
-              ]
-            }
-          ]
+          hlsVariant: []
         }
       ]
     }

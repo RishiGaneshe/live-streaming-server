@@ -1,6 +1,8 @@
 const ffmpeg = require('fluent-ffmpeg')
+const { ffmpegPath, ffmpegProbeLinuxPath, ffmpegProbe, ffmpegLinuxPath}= require('./domain.config')
 
-ffmpeg.setFfmpegPath('C:/Program Files/ffmpeg-7.1.1-essentials_build/bin/ffmpeg.exe')
-ffmpeg.setFfprobePath('C:/Program Files/ffmpeg-7.1.1-essentials_build/bin/ffprobe.exe')
+ffmpeg.setFfmpegPath(ffmpegPath)
+ffmpeg.setFfprobePath(ffmpegProbe)
+
 
 module.exports = ffmpeg

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Live Camera Stream</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    video {
+      width: 640px;
+      height: auto;
+      border: 1px solid #ccc;
+      margin-bottom: 10px;
+    }
+    button {
+      margin: 5px;
+      padding: 10px 20px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Live Camera Stream</h2>
+  <video id="preview" autoplay muted playsinline></video>
+  <div>
+    <button id="startBtn">Start Streaming</button>
+    <button id="pauseBtn">Pause Streaming</button>
+    <button id="resumeBtn">Resume Streaming</button>
+    <button id="stopBtn">Stop Streaming</button>
+  </div>
+
+  <script>
+    const preview = document.getElementById('preview');
+    const startBtn = document.getElementById('startBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const resumeBtn = document.getElementById('resumeBtn');
+    const stopBtn = document.getElementById('stopBtn');
+
+    let mediaRecorder;
+    let stream;
+    let ws;
+
+    startBtn.onclick = async () => {
+      stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      preview.srcObject = stream;
+
+      ws = new WebSocket('ws://localhost:7010');
+
+      ws.onopen = () => {
+        mediaRecorder = new MediaRecorder(stream, {
+          mimeType: 'video/webm; codecs=vp8,opus'
+        });
+
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0 && ws.readyState === WebSocket.OPEN) {
+            ws.send(event.data);
+          }
+        };
+
+        mediaRecorder.start(1000);
+      };
+    };
+
+    pauseBtn.onclick = () => {
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.pause();
+      }
+    };
+
+    resumeBtn.onclick = () => {
+      if (mediaRecorder && mediaRecorder.state === 'paused') {
+        mediaRecorder.resume();
+      }
+    };
+
+    stopBtn.onclick = () => {
+      if (mediaRecorder) mediaRecorder.stop();
+      if (ws) ws.close();
+      if (stream) stream.getTracks().forEach(track => track.stop());
+      preview.srcObject = null;
+    };
+  </script>
+</body>
+</html>

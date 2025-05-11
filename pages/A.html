@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Video Stream</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .container {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      width: 90%;
+      max-width: 800px;
+      text-align: center;
+    }
+
+    video {
+      width: 100%;
+      border-radius: 8px;
+      margin-top: 20px;
+    }
+
+    button {
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Lecture Video</h1>
+    <button onclick="startVideo()">Start Video</button>
+    <video id="videoPlayer" controls style="display: none;">
+      <source id="videoSource" type="video/mp4" />
+      Your browser does not support the video tag.
+    </video>
+  </div>
+
+  <script>
+    function startVideo() {
+      const video = document.getElementById('videoPlayer');
+      const source = document.getElementById('videoSource');
+
+      source.src = 'http://192.168.31.2:7010/video-stream/movie_Fast_X._2023.mp4'
+      video.style.display = 'block';
+      video.load();
+      video.play();
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HLS Live Stream Player</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%; width: 100%;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #111;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .player-container {
+      position: relative;
+      width: 100%;
+      max-width: 960px;
+      aspect-ratio: 16 / 9;
+      background: #000;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.8);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      display: block;
+      background-color: #000;
+    }
+
+    .quality-control {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: rgba(0, 0, 0, 0.6);
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 10;
+    }
+
+    .quality-control select {
+      background: #fff;
+      color: #000;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 14px;
+      border: none;
+    }
+
+    #goLiveBtn {
+      position: absolute;
+      bottom: 12px;
+      right: 12px;
+      z-index: 10;
+      padding: 10px 16px;
+      font-size: 14px;
+      background-color: #e50914;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      display: none;
+      transition: background-color 0.3s ease;
+    }
+
+    #goLiveBtn:hover {
+      background-color: #c40612;
+    }
+
+    #bufferingIndicator {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background-color: rgba(0, 0, 0, 0.5);
+      color: white;
+      font-size: 18px;
+      z-index: 20;
+      pointer-events: none;
+    }
+
+    @media (max-width: 768px) {
+      .quality-control { font-size: 12px; padding: 5px 8px; }
+      .quality-control select { font-size: 12px; padding: 3px 6px; }
+      #goLiveBtn { padding: 8px 12px; font-size: 12px; bottom: 8px; right: 8px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="player-container">
+    <video id="video" controls></video>
+
+    <div class="quality-control">
+      <label for="qualitySelector">Quality:</label>
+      <select id="qualitySelector">
+        <option value="-1">Auto</option>
+      </select>
+    </div>
+
+    <div id="bufferingIndicator">Buffering...</div>
+    <button id="goLiveBtn">Go Live</button>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <script>
+    const video = document.getElementById('video');
+    const qualitySelector = document.getElementById('qualitySelector');
+    const goLiveBtn = document.getElementById('goLiveBtn');
+    const bufferingIndicator = document.getElementById('bufferingIndicator');
+    const videoSrc = 'http://192.168.31.2:5000/live/teacher123/index.m3u8';
+
+    // --- Live Edge Checker ---
+    function isBehindLiveEdge(video, threshold = 3) {
+      const buffered = video.buffered;
+      if (buffered.length === 0) return false;
+      const bufferedEnd = buffered.end(buffered.length - 1);
+      return (bufferedEnd - video.currentTime) > threshold;
+    }
+
+    function checkLiveEdge() {
+      if (isBehindLiveEdge(video)) {
+        goLiveBtn.style.display = 'block';
+      } else {
+        goLiveBtn.style.display = 'none';
+      }
+    }
+
+    goLiveBtn.addEventListener('click', () => {
+      const buffered = video.buffered;
+      if (buffered.length > 0) {
+        const end = buffered.end(buffered.length - 1);
+        video.currentTime = end - 0.1;
+      }
+      goLiveBtn.style.display = 'none';
+    });
+
+    setInterval(checkLiveEdge, 1000);
+
+    // --- Buffering Detection ---
+    let bufferingTimeout;
+
+    video.addEventListener('waiting', () => {
+      clearTimeout(bufferingTimeout);
+      bufferingTimeout = setTimeout(() => {
+        bufferingIndicator.style.display = 'flex';
+      }, 200); // slight delay avoids flickering
+    });
+
+    video.addEventListener('playing', () => {
+      clearTimeout(bufferingTimeout);
+      bufferingIndicator.style.display = 'none';
+    });
+
+    // --- HLS Init ---
+    if (Hls.isSupported()) {
+      const hls = new Hls({
+        maxLiveSyncPlaybackRate: 1.0,
+        liveSyncDuration: 5,
+        liveMaxLatencyDuration: 10,
+        enableWorker: true,
+        lowLatencyMode: false,
+      });
+
+      hls.loadSource(videoSrc);
+      hls.attachMedia(video);
+
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        hls.levels.forEach((level, i) => {
+          const option = document.createElement('option');
+          option.value = i;
+          option.text = `${level.height}p`;
+          qualitySelector.appendChild(option);
+        });
+
+        qualitySelector.addEventListener('change', function () {
+          hls.currentLevel = parseInt(this.value);
+        });
+      });
+
+      hls.on(Hls.Events.BUFFER_APPENDED, () => {
+        const buffered = video.buffered;
+        if (buffered.length > 0 && video.currentTime < 1) {
+          const end = buffered.end(buffered.length - 1);
+          video.currentTime = end - 5;
+        }
+      });
+
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = videoSrc;
+    } else {
+      alert("HLS is not supported in this browser.");
+    }
+  </script>
+</body>
+</html>

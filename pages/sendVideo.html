@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Upload Video</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f6fa;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+    }
+    .container {
+      margin-top: 50px;
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      width: 400px;
+    }
+    h2 {
+      text-align: center;
+      color: #2f3640;
+    }
+    input[type="file"] {
+      width: 100%;
+      padding: 8px;
+      margin-top: 15px;
+    }
+    button {
+      margin-top: 20px;
+      width: 100%;
+      padding: 10px;
+      background-color: #0984e3;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background-color: #74b9ff;
+    }
+    .response {
+      margin-top: 20px;
+      font-size: 14px;
+    }
+    .success {
+      color: green;
+    }
+    .error {
+      color: red;
+    }
+    .loading {
+      color: #2d3436;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Upload MP4 Video</h2>
+    <form id="uploadForm">
+      <input type="file" id="videoFile" accept="video/mp4" required />
+      <button type="submit">Upload</button>
+    </form>
+    <div id="response" class="response"></div>
+  </div>
+
+  <script>
+    const form = document.getElementById('uploadForm');
+    const responseDiv = document.getElementById('response');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fileInput = document.getElementById('videoFile');
+      const file = fileInput.files[0];
+
+      if (!file || file.type !== 'video/mp4') {
+        responseDiv.textContent = 'Please select a valid MP4 file.';
+        responseDiv.className = 'response error';
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('video', file);
+
+      responseDiv.textContent = 'Uploading and transcoding... please wait.';
+      responseDiv.className = 'response loading';
+
+      try {
+        const res = await fetch('http://192.168.31.2:7010/video-transcoding-ww', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          responseDiv.className = 'response success';
+          responseDiv.innerHTML = `
+            <p>Upload successful!</p>
+            <p><a href="${data.playlist_url}" target="_blank">Click here to stream the video</a></p>`;
+        } else {
+          responseDiv.className = 'response error';
+          responseDiv.textContent = 'Upload failed: ' + data.message;
+        }
+      } catch (err) {
+        console.error(err);
+        responseDiv.className = 'response error';
+        responseDiv.textContent = 'Error uploading video.';
+      }
+    });
+  </script>
+</body>
+</html>
